@@ -1,0 +1,201 @@
+#!/usr/bin/env ruby
+
+require 'rubygems'
+require 'logger'
+require 'restclient'
+require 'awesome_print'
+require 'uri'
+require 'pp'
+require 'rack'
+require 'term/ansicolor'
+require 'active_record'
+require 'active_support/core_ext/hash'
+include Term::ANSIColor
+
+def die text
+  puts "Отменено: #{red(text)}"
+  exit 1
+end
+
+if ARGV[0] == "setup"
+  root = `git rev-parse --show-toplevel`.strip
+
+  if $? != 0 or root.empty?
+    die "Убедитесь что вы находитесь в рабочей папке git-репозитория"
+  end
+
+  `mkdir #{root}/.git/hooks &> /dev/null`
+  `cp #{$0} #{root}/.git/hooks/commit-msg`
+  die '' if $? != 0
+  `chmod 777 #{root}/.git/hooks/commit-msg`
+  die '' if $? != 0
+
+  if ARGV[1].to_s.empty? or ARGV[2].to_s.empty?
+    puts "Используйте: #{$0} setup <project> <api-key> [host = http://rk.rnds.pro]"
+    die "Не задан проект или API-ключ."
+  end
+
+  `git config redmine.project #{ARGV[1]}`
+  `git config redmine.key #{ARGV[2]}`
+  `git config redmine.host #{ARGV[3]}` if !ARGV[3].to_s.empty?
+  exit 1
+end
+
+class IssueManager
+
+  INPROGRESS=[1, 2, 3]
+
+  attr_accessor :host, :project, :apikey, :last
+
+  def initialize
+    @host=`git config redmine.host`.strip
+    @host=(@host.empty?) ? 'http://rk.rnds.pro' : @host
+
+    @project=`git config redmine.project`.strip
+    @apikey=`git config redmine.key`.strip
+
+    if @project.empty? or @apikey.empty?
+      puts "Используйте: #{$0} setup <project> <api-key> [host = http://rk.rnds.pro]"
+      die "Не задан проект или API-ключ."
+    end
+
+    @client = RestClient::Resource.new("#{@host}/projects/#{@project}",
+      headers: {
+        'X-Redmine-API-Key' => @apikey,
+        accept: :json
+      },
+    ) 
+  end
+
+  def dump_last_issue
+    `git config redmine.last.id "#{@last['id']}"`
+    `git config redmine.last.subject "#{@last['subject'].strip}"`
+    `git config redmine.last.updated "#{@last['updated_on']}"`
+  end
+
+  def restore_last_issue
+    @last ||= {
+      id: `git config redmine.last.id`.strip,
+      subject: `git config redmine.last.subject`.strip,
+      updated_on: `git config redmine.last.updated`.strip,
+    }.with_indifferent_access
+    raise "error" if @last[:id].empty? or @last[:subject].empty? or @last[:updated_on].empty? 
+    return @last
+  rescue => e
+    @last = nil
+    return @last
+  end
+
+  def issues options = {}
+
+    params = {
+      limit: (options[:limit] || 6),
+      f:  [:status_id, :assigned_to_id, ''],
+      op: {status_id: '=', assigned_to_id: '='},
+      v:  {status_id: INPROGRESS, assigned_to_id: ['me']},
+      sort: "updated_on:desc,id:desc"
+    }
+
+    query = Rack::Utils.build_nested_query params
+
+    return JSON.parse(@client['/issues.json' + "?#{query}"].get)['issues'].map{|i| i.with_indifferent_access}
+  end
+
+  def print_issue idx, issue
+    puts " [%s] %s #%s %s %s" % [
+      green(idx),
+      I18n.l(DateTime.parse(issue['updated_on']), format: :short),
+      cyan(issue['id'].to_s),
+      "(#{yellow(issue['status']['name']) rescue yellow('НЕТ')})".ljust(20),
+      issue['subject']
+    ]
+  end
+
+  def print_issues issues
+    issues.each_with_index do |issue, i|
+      print_issue (i + 2).to_s, issue
+    end
+  end
+
+  def select_issue issues
+    puts "Выберите задачу".center(45, '=')
+    if restore_last_issue
+      puts yellow("Последняя:")
+      print_issue '1', @last
+    end
+
+    puts yellow("Открытые:")
+    print_issues issues
+    while true
+      print "> "
+      cmd = $stdin.gets.strip
+      die "выход" if cmd == "q" or cmd == "quit"
+
+      idx = cmd.to_i
+
+      issue = if idx == 1
+        @last
+      elsif (idx >= 2 and idx <= (issues.count + 1))
+        issues[idx - 2]
+      end
+
+      break if issue
+    end
+
+    @last = issue
+    dump_last_issue
+    @last
+  end
+end
+
+
+def commit_msg
+  message_file = ARGV[0]
+  message = File.read(message_file).strip
+
+  regex = /(refs[ ]*#(\d+)|fixes[ ]*#(\d+))/
+
+  if message.empty?
+    die "Сообщение не может быть пустым"
+  end
+
+  if !regex.match(message)
+
+    puts red("В сообщении не указан номер задачи в виде refs #XXX или fixes #XXX")
+
+    STDIN.reopen('/dev/tty')
+
+    im = IssueManager.new
+
+    puts "".center(45, '=')
+    puts "Трекер: " + yellow(im.host) + "  Проект: " + yellow(im.project)
+
+    issues = im.issues
+    issue = im.select_issue issues  
+    message += " refs ##{issue[:id]}\n"
+
+    File.write(message_file, message)
+
+    STDIN.close
+
+    exit 0
+  end
+end
+
+begin
+  if File.basename($0) == "commit-msg"
+    commit_msg
+  else
+    im = IssueManager.new
+    issues = im.issues
+    i = im.select_issue issues    
+  end
+rescue => e 
+  ap e
+  puts e.backtrace
+end
+
+die "ошибка"
+
+
+
