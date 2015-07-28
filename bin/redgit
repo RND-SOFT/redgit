@@ -24,16 +24,16 @@ if ARGV[0] == "setup"
     die "Убедитесь что вы находитесь в рабочей папке git-репозитория"
   end
 
+  if ARGV[1].to_s.empty? or ARGV[2].to_s.empty?
+    puts "Используйте: #{$0} setup <project> <api-key> [host = http://rk.rnds.pro]"
+    die "Не задан проект или API-ключ."
+  end
+
   `mkdir #{root}/.git/hooks &> /dev/null`
   `cp #{$0} #{root}/.git/hooks/commit-msg`
   die '' if $? != 0
   `chmod 777 #{root}/.git/hooks/commit-msg`
   die '' if $? != 0
-
-  if ARGV[1].to_s.empty? or ARGV[2].to_s.empty?
-    puts "Используйте: #{$0} setup <project> <api-key> [host = http://rk.rnds.pro]"
-    die "Не задан проект или API-ключ."
-  end
 
   `git config redmine.project #{ARGV[1]}`
   `git config redmine.key #{ARGV[2]}`
