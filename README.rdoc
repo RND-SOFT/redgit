@@ -5,12 +5,14 @@ It offers you opened issues and forces you to select one when you dealing with r
 
 == Example
 Setup
-  jerry@jerry ~/devel/iteq/hermes$ redgit
-  
-  Используйте: /home/jerry/bin/redgit setup <project> <api-key> [host = http://redmine.pro]
-  Отменено: Не задан проект или API-ключ.
-  
-  jerry@jerry ~/devel/iteq/hermes $ redgit setup prj 123d5a71aa1f5ae555dca88746daa337e9a28321
+```
+jerry@jerry ~/devel/iteq/hermes$ redgit
+
+Используйте: /home/jerry/bin/redgit setup <project> <api-key> [host = http://redmine.pro]
+Отменено: Не задан проект или API-ключ.
+
+jerry@jerry ~/devel/iteq/hermes $ redgit setup prj 123d5a71aa1f5ae555dca88746daa337e9a28321
+```
 
 Usage
   jerry@jerry ~/devel/iteq/hermes $ git commit -am "тестовый коммит"
