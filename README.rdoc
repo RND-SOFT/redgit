@@ -3,12 +3,20 @@ Redgit is gem for commit-msg git hook redmine integration.
 
 It offers you opened issues and forces you to select one when you dealing with redmine project manager. Or just skip all if you put `refs #<issue>` in commit message.
 
-  jerry@jerry ~/devel/iteq/gisr/lk $ git commit -am "тестовый коммит"
+== Example
 
+  jerry@jerry ~/devel/iteq/hermes$ redgit
+  
+  Используйте: /home/jerry/bin/redgit setup <project> <api-key> [host = http://redmine.pro]
+  Отменено: Не задан проект или API-ключ.
+  
+  jerry@jerry ~/devel/iteq/hermes $ redgit setup prj 123d5a71aa1f5ae555dca88746daa337e9a28321
+
+  jerry@jerry ~/devel/iteq/gisr/lk $ git commit -am "тестовый коммит"
 
   В сообщении не указан номер задачи в виде refs #XXX или fixes #XXX
   =============================================
-  Трекер: http://rk.rnds.pro  Проект: gisrnd
+  Трекер: http://redmine.pro  Проект: prj
   ===============Выберите задачу===============
   Последняя:
    [1] 04 Aug 10:55 #4856 (НЕТ)       ИС Личный Кабинет
