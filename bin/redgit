@@ -17,29 +17,6 @@ def die text
   exit 1
 end
 
-if ARGV[0] == "setup"
-  root = `git rev-parse --show-toplevel`.strip
-
-  if $? != 0 or root.empty?
-    die "Убедитесь что вы находитесь в рабочей папке git-репозитория"
-  end
-
-  if ARGV[1].to_s.empty? or ARGV[2].to_s.empty?
-    puts "Используйте: #{$0} setup <project> <api-key> [host = http://rk.rnds.pro]"
-    die "Не задан проект или API-ключ."
-  end
-
-  `mkdir #{root}/.git/hooks &> /dev/null`
-  `cp #{$0} #{root}/.git/hooks/commit-msg`
-  die '' if $? != 0
-  `chmod 777 #{root}/.git/hooks/commit-msg`
-  die '' if $? != 0
-
-  `git config redmine.project #{ARGV[1]}`
-  `git config redmine.key #{ARGV[2]}`
-  `git config redmine.host #{ARGV[3]}` if !ARGV[3].to_s.empty?
-  exit 1
-end
 
 class IssueManager
 
@@ -58,6 +35,8 @@ class IssueManager
       puts "Используйте: #{$0} setup <project> <api-key> [host = http://rk.rnds.pro]"
       die "Не задан проект или API-ключ."
     end
+
+    # RestClient.log = Logger.new(STDOUT)
 
     @client = RestClient::Resource.new("#{@host}/projects/#{@project}",
       headers: {
@@ -88,26 +67,38 @@ class IssueManager
 
   def issues options = {}
 
+    # params = {
+    #   limit: (options[:limit] || 6),
+    #   f:  [:status_id, :assigned_to_id, ''],
+    #   op: {status_id: '=', assigned_to_id: '='},
+    #   v:  {status_id: INPROGRESS, assigned_to_id: ['me']},
+    #   sort: "updated_on:desc,id:desc"
+    # }
+
     params = {
-      limit: (options[:limit] || 6),
-      f:  [:status_id, :assigned_to_id, ''],
-      op: {status_id: '=', assigned_to_id: '='},
-      v:  {status_id: INPROGRESS, assigned_to_id: ['me']},
-      sort: "updated_on:desc,id:desc"
+      limit: 20,
+      status_id: 'opened',
+      assigned_to_id: 'me',
+      sort: "updated_on:desc,id:desc",
     }
 
-    query = Rack::Utils.build_nested_query params
+    #query = Rack::Utils.build_nested_query params
 
-    return JSON.parse(@client['/issues.json' + "?#{query}"].get)['issues'].map{|i| i.with_indifferent_access}
+    #return JSON.parse(@client['/issues.json' + "?#{query}"].get)['issues'].map{|i| i.with_indifferent_access}
+    raw_issues = JSON.parse(@client['/issues.json'].get(params: params))['issues']
+    raw_issues.select!{|i| INPROGRESS.include?(i['status']['id'].to_i)}
+    return raw_issues.first(options[:limit] || 6).map{|i| i.with_indifferent_access}
   end
 
   def print_issue idx, issue
+    # puts " [%s] %s #%s %s %s %s" % [
     puts " [%s] %s #%s %s %s" % [
       green(idx),
       I18n.l(DateTime.parse(issue['updated_on']), format: :short),
       cyan(issue['id'].to_s),
       "(#{yellow(issue['status']['name']) rescue yellow('НЕТ')})".ljust(20),
-      issue['subject']
+      #{}"(#{yellow(issue['assigned_to']['name']) rescue yellow('НЕТ')})".ljust(27),
+      issue['subject'],
     ]
   end
 
@@ -179,7 +170,44 @@ def commit_msg
     STDIN.close
 
     exit 0
+  else
+    exit 0
   end
+end
+
+def git_root
+  root = `git rev-parse --show-toplevel`.strip
+
+  if $? != 0 or root.empty?
+    die "Убедитесь что вы находитесь в рабочей папке git-репозитория"
+  end
+  return root
+end
+
+if ARGV[0] == "setup"
+  root = git_root
+
+  if ARGV[1].to_s.empty? or ARGV[2].to_s.empty?
+    puts "Используйте: #{$0} setup <project> <api-key> [host = http://rk.rnds.pro]"
+    die "Не задан проект или API-ключ."
+  end
+
+  `mkdir #{root}/.git/hooks &> /dev/null`
+  `cp #{$0} #{root}/.git/hooks/commit-msg`
+  die '' if $? != 0
+  `chmod 777 #{root}/.git/hooks/commit-msg`
+  die '' if $? != 0
+
+  `git config redmine.project #{ARGV[1]}`
+  `git config redmine.key #{ARGV[2]}`
+  `git config redmine.host #{ARGV[3]}` if !ARGV[3].to_s.empty?
+  exit 1
+elsif ARGV[0] == "issues"
+  root = git_root
+  im = IssueManager.new
+  im.print_issues im.issues
+
+  exit 0
 end
 
 begin
