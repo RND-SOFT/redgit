@@ -7,9 +7,9 @@ Gem::Specification.new do |s|
   s.version     = Redgit::VERSION
   s.authors     = ["Samoilenko Yuri"]
   s.email       = ["kinnalru@gmail.com"]
-  #s.homepage    = "https://github.com/sunchess/jumping_words"
+  s.homepage    = "http://github.com/kinnalru/redgit"
   s.summary     = %q{Redgit is gem for commit-msg git hook redmine integration}
-  s.description = %q{Redgit is gem for commit-msg git hook redmine integration.}
+  s.description = %q{Redgit is gem for commit-msg git hook redmine integration. Run redgit in git reposirory folder.}
 
   s.files         = `git ls-files`.split("\n")
   s.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")

@@ -1,64 +1,35 @@
-= Jumping Words
-The program speaks and displays in the pop-up window the word or phrase and the word's translation or phrase.
-After end of list back to the start.
+= Redgit
+Redgit is gem for commit-msg git hook redmine integration.
 
-Supports OS MAC OS X 10.8 or higher or Ubuntu
+It offers you opened issues and forces you to select one when you dealing with redmine project manager. Or just skip all if you put `refs #<issue>` in commit message.
 
-== Dependencies
-For linux
-sudo apt-get install libnotify-bin
+  jerry@jerry ~/devel/iteq/gisr/lk $ git commit -am "тестовый коммит"
 
-On MAC OS X before you start, you should add to your system the voices for words and translates.
-To enable the speech recognition ability and use speech commands on your Mac, the first thing you have to do is open the Speech menu from System Preferences.
 
-For example for Russian you should install the Milena voice.
+  В сообщении не указан номер задачи в виде refs #XXX или fixes #XXX
+  =============================================
+  Трекер: http://rk.rnds.pro  Проект: gisrnd
+  ===============Выберите задачу===============
+  Последняя:
+   [1] 04 Aug 10:55 #4856 (НЕТ)       ИС Личный Кабинет
+  Открытые:
+   [2] 04 Aug 10:55 #4856 (Работаю)   ИС Личный Кабинет
+   [3] 04 Aug 07:33 #4846 (Работаю)   Адаптация ИС Пророк под новую архитектуру.
+  > 2
+  [master 7346ec3] тестовый коммит refs #4856
+   1 file changed, 1 insertion(+)
 
-== Config
-Default:
-  Show message: true
-  Timeout between a word and translate: 3 sec.
-  Timeout to start list: 10 sec.
-  MAC OS X word voice: Vicki.
-  MAC OS X translate voice: Milena.
 
-More:
-  jwords -h
+== Installation
+Gem
+  gem install redgit
+
+Project
+  redgit setup <redmine-project> <api-key> [redmine host]
 
 == Actions
-Starting
-  jwords start
-or
-  jwords -v Fiona -t Milena -i5 start
-
-Stoping
-  ctrl+c
-
-View a list of words
-  jwords list
-
-  1 convenient: удобный | 7
-  2 If I were you: на твоем месте | 6
-  3 in turns: по очереди | 5
-  4 endurance: выносливость | 2
-  5 spoil, spoilt, spoilt: портиться, испортилось | 2
-  6 to lead, led, led: приводить, привели | 2
-  7 to achieve: достигать | 2
-  ...
-
-Adding words to the database
-  jwords -a root: корень
-  jwords -a to play: играть
-
-Delete a word from the database (indicated by the index of the word in the list)
-  jwords -d 1
-
-If you want to change words in directly in CSV find .jwords directory in your home directory, then open jumping_words_db.csv. After saving the file restart the script.
-
-== Install
- gem install jumping_words
-
-For OS X users: you also should install the https://github.com/alloy/terminal-notifier for notifications.
-  brew install terminal-notifier
+Test
+  redgit issues
 
 == ToDo
-For Ubuntu users give config for changing language system voice.
+
