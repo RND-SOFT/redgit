@@ -26,13 +26,11 @@ class IssueManager
 
   def initialize
     @host=`git config redmine.host`.strip
-    @host=(@host.empty?) ? 'http://redmine.pro' : @host
-
     @project=`git config redmine.project`.strip
     @apikey=`git config redmine.key`.strip
 
-    if @project.empty? or @apikey.empty?
-      puts "Используйте: #{$0} setup <project> <api-key> [host = http://redmine.pro]"
+    if @project.empty? or @apikey.empty? or @host.empty?
+      puts "Используйте: #{$0} setup <project> <api-key> <host>"
       die "Не задан проект или API-ключ."
     end
 
@@ -188,7 +186,7 @@ if ARGV[0] == "setup"
   root = git_root
 
   if ARGV[1].to_s.empty? or ARGV[2].to_s.empty?
-    puts "Используйте: #{$0} setup <project> <api-key> [host = http://rk.rnds.pro]"
+    puts "Используйте: #{$0} setup <project> <api-key> <host>"
     die "Не задан проект или API-ключ."
   end
 
