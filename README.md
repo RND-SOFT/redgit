@@ -5,7 +5,8 @@ It offers you opened issues and forces you to select one when you dealing with r
 
 == Example
 Setup
-```
+
+```ruby
 jerry@jerry ~/devel/iteq/hermes$ redgit
 
 Используйте: /home/jerry/bin/redgit setup <project> <api-key> [host = http://redmine.pro]
