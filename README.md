@@ -16,6 +16,11 @@ jerry@jerry ~/devel/iteq/lk redgit
 jerry@jerry ~/devel/iteq/lk $ redgit setup prj 123d5a71aa1f5ae555dca88746daa337e9a28321
 ```
 
+### Update
+```sh
+redgit update
+```
+
 ### Usage
 
 ```ruby

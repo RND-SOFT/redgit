@@ -205,6 +205,13 @@ if ARGV[0] == "setup"
 
   puts "Setup completed successfuly"
   exit 1
+elsif ARGV[0] == "update"
+  root = git_root
+  File.open("#{root}/.git/hooks/commit-msg", "w+") do |f|
+    f.puts "#!/bin/bash"
+    f.puts "exec redgit $@ < /dev/tty"
+  end
+  exit 1
 elsif ARGV[0] == "issues"
   root = git_root
   im = IssueManager.new
