@@ -17,7 +17,6 @@ def die text
   exit 1
 end
 
-
 class IssueManager
 
   INPROGRESS=[1, 2, 3]
@@ -152,7 +151,7 @@ def commit_msg
 
     puts red("В сообщении не указан номер задачи в виде refs #XXX или fixes #XXX")
 
-    STDIN.reopen('/dev/tty')
+    #STDIN.reopen('/dev/tty')
 
     im = IssueManager.new
 
@@ -165,7 +164,7 @@ def commit_msg
 
     File.write(message_file, message)
 
-    STDIN.close
+    #STDIN.close
 
     exit 0
   else
@@ -191,14 +190,20 @@ if ARGV[0] == "setup"
   end
 
   `mkdir #{root}/.git/hooks &> /dev/null`
-  `cp #{$0} #{root}/.git/hooks/commit-msg`
-  die '' if $? != 0
+
+  File.open("#{root}/.git/hooks/commit-msg", "w+") do |f|
+    f.puts "#!/bin/bash"
+    f.puts "exec redgit $@ < /dev/tty"
+  end
+
   `chmod 777 #{root}/.git/hooks/commit-msg`
   die '' if $? != 0
 
   `git config redmine.project #{ARGV[1]}`
   `git config redmine.key #{ARGV[2]}`
   `git config redmine.host #{ARGV[3]}` if !ARGV[3].to_s.empty?
+
+  puts "Setup completed successfuly"
   exit 1
 elsif ARGV[0] == "issues"
   root = git_root
